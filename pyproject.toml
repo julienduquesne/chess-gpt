@@ -1,7 +1,7 @@
 [project]
-name = "vanilla-llm"
+name = "nano-lm"
 version = "0.1.0"
-description = "Implementation of a vanilla LLM from scratch, using basic PyTorch building blocks."
+description = "Implementation of a nano LLM from scratch, using basic PyTorch building blocks."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
