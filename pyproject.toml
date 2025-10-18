@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "nano-lm"
 version = "0.1.0"
@@ -7,4 +11,13 @@ requires-python = ">=3.12"
 dependencies = [
     "numpy>=2.3.4",
     "torch>=2.9.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["nanolm*"]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.3.0",
+    "ruff>=0.14.1",
 ]
