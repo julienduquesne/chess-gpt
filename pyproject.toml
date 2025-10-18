@@ -1,0 +1,10 @@
+[project]
+name = "vanilla-llm"
+version = "0.1.0"
+description = "Implementation of a vanilla LLM from scratch, using basic PyTorch building blocks."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.3.4",
+    "torch>=2.9.0",
+]
