@@ -1,6 +1,6 @@
 from typing import Callable
-from nanolm.tokenizers.tokenizer import Tokenizer
-from .dataset import TextDataset
+from nanolm.tokenizers import Tokenizer
+from nanolm.datasets import TextDataset
 
 
 class DataLoader:
