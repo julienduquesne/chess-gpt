@@ -77,8 +77,14 @@ def run_epoch(
         logits, _ = model(inputs, attention_mask=attn_masks[:, :-1])
         pred_tokens = logits.argmax(dim=-1)
         B, L, V = logits.shape
-        loss = F.cross_entropy(logits.view(B * L, V), targets.reshape(B * L))
-
+        pad_id = (
+            tokenizer.pad_token_id
+        )  # adapt if your tokenizer uses a different attribute
+        loss = F.cross_entropy(
+            logits.view(B * L, V),
+            targets.reshape(B * L),
+            ignore_index=pad_id,
+        )
         if train:
             loss.backward()
             optimizer.step()  # type: ignore
@@ -91,7 +97,9 @@ def run_epoch(
         pred_moves = tokenizer.decode_batch(pred_tokens.tolist())
         legal_moves += count_legal_moves(moves, pred_moves)
     logging.info(f"Train loss: {total_loss / total_tokens}")
-    logging.info(f"Percentage of legal moves: {legal_moves / total_tokens:.4f}")
+    logging.info(
+        f"Percentage of legal moves: {(legal_moves / total_tokens) * 100:.4f}%"
+    )
 
 
 def _prepare_batch(
