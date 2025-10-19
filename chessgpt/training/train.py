@@ -69,7 +69,7 @@ def run_epoch(
     total_loss = 0.0
     total_tokens = 0
     pbar = tqdm(dataloader, desc="train" if train else "val", leave=False)
-    legal_moves, illegal_moves_count = 0, 0
+    legal_moves_count, illegal_moves_count = 0, 0
     for games_batch in pbar:
         inputs, attn_masks, targets = _prepare_batch(games_batch)
         if train:
@@ -94,11 +94,11 @@ def run_epoch(
         moves = tokenizer.decode_batch(inputs.tolist())
         pred_moves = tokenizer.decode_batch(pred_tokens.tolist())
         legal_moves, illegal_moves = count_legal_moves(moves, pred_moves)
-        legal_moves += legal_moves
+        legal_moves_count += legal_moves
         illegal_moves_count += illegal_moves
     logging.info(f"{'Train' if train else 'Val'} loss: {total_loss / total_tokens}")
     logging.info(
-        f"Percentage of legal moves: {(legal_moves / (legal_moves + illegal_moves_count)) * 100:.4f}%"
+        f"Percentage of legal moves: {(legal_moves_count / (legal_moves_count + illegal_moves_count)) * 100:.4f}%"
     )
 
 
