@@ -1,6 +1,13 @@
+from dataclasses import dataclass
 import torch
 from chessgpt.tokenizers import Tokenizer
 from chessgpt.datasets import GamesDataset
+
+
+@dataclass
+class GamesBatch:
+    tokens: torch.Tensor
+    attention_masks: torch.Tensor
 
 
 class GamesDataLoader:
@@ -36,7 +43,7 @@ class GamesDataLoader:
 
     def _collate(
         self, batch: list[list[int]], max_length: int | None = None
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    ) -> GamesBatch:
         """
         Collate function to pad sequences in a batch to the same length.
         """
@@ -54,4 +61,4 @@ class GamesDataLoader:
             padded_batch.append(padded_seq)
             attention_masks.append(attention_mask)
 
-        return torch.tensor(padded_batch), torch.tensor(attention_masks)
+        return GamesBatch(torch.tensor(padded_batch), torch.tensor(attention_masks))

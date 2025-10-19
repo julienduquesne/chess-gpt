@@ -1,13 +1,14 @@
 import logging
-import time
 import torch
 import torch.nn.functional as F
 from tqdm import tqdm
+
 from chessgpt.constants import DATA_DIR
-from chessgpt.dataloaders import GamesDataLoader
-from chessgpt.datasets.dataset import GamesDataset
-from chessgpt.model.chessgpt import ChessGPT
-from chessgpt.tokenizers.tokenizer import Tokenizer
+from chessgpt.dataloaders import GamesDataLoader, GamesBatch
+from chessgpt.datasets import GamesDataset
+from chessgpt.eval import count_legal_moves
+from chessgpt.model import ChessGPT
+from chessgpt.tokenizers import Tokenizer
 
 
 def train(
@@ -35,90 +36,94 @@ def train(
     """
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     for _ in range(num_epochs):
-        run_train_epoch(model, train_dataloader, optimizer)
-        run_val_epoch(model, val_dataloader)
+        run_epoch(model, train_dataloader, train=True, optimizer=optimizer)
+        run_epoch(model, val_dataloader, train=False)
 
 
-def run_train_epoch(
-    model: ChessGPT, dataloader: GamesDataLoader, optimizer: torch.optim.Optimizer
+def run_epoch(
+    model: ChessGPT,
+    dataloader: GamesDataLoader,
+    train: bool,
+    optimizer: torch.optim.Optimizer | None = None,
 ):
     """
     Run a single training epoch.
+
     Parameters
     ----------
     model : ChessGPT
         The ChessGPT model to be trained.
     dataloader : GamesDataLoader
         DataLoader for the training dataset.
-    optimizer : torch.optim.Optimizer
+    train : bool
+        If True, run training; otherwise, run validation.
+    optimizer : torch.optim.Optimizer | None
         Optimizer for updating model parameters.
     """
-    model.train()
+    if train:
+        if optimizer is None:
+            raise ValueError("Optimizer must be provided for training.")
+        model.train()
+    else:
+        model.eval()
     total_loss = 0.0
     total_tokens = 0
-    pbar = tqdm(dataloader, desc="train", leave=False)
+    pbar = tqdm(dataloader, desc="train" if train else "val", leave=False)
+    legal_moves = 0
     for games_batch in pbar:
-        tokens, attn_masks = games_batch
-        attn_masks = torch.tril(
-            attn_masks.view(-1, 1, attn_masks.size(-1)).repeat(
-                1, attn_masks.size(-1), 1
-            )
-        ).bool()
-        start_time = time.time()
-        targets = tokens[:, 1:]
-        inputs = tokens[:, :-1]
-        optimizer.zero_grad()
+        inputs, attn_masks, targets = _prepare_batch(games_batch)
+        if train:
+            optimizer.zero_grad()  # type: ignore
         logits, _ = model(inputs, attention_mask=attn_masks[:, :-1])
+        pred_tokens = logits.argmax(dim=-1)
         B, L, V = logits.shape
         loss = F.cross_entropy(logits.view(B * L, V), targets.reshape(B * L))
-        loss.backward()
-        optimizer.step()
-        elapsed = time.time() - start_time
+
+        if train:
+            loss.backward()
+            optimizer.step()  # type: ignore
+
         batch_tokens = B * L
         total_loss += loss.item()
         total_tokens += batch_tokens
-        running_loss = loss.item() / batch_tokens
-        tok_per_s = batch_tokens / elapsed if elapsed > 0 else 0.0
-        pbar.set_postfix(loss=f"{running_loss:.4f}", tok_s=f"{tok_per_s:.0f}")
+        pbar.set_postfix(loss=f"{(loss.item() / batch_tokens):.4f}")
+        moves = tokenizer.decode_batch(inputs.tolist())
+        pred_moves = tokenizer.decode_batch(pred_tokens.tolist())
+        legal_moves += count_legal_moves(moves, pred_moves)
     logging.info(f"Train loss: {total_loss / total_tokens}")
+    logging.info(f"Percentage of legal moves: {legal_moves / total_tokens:.4f}")
 
 
-def run_val_epoch(
-    model: ChessGPT,
-    dataloader: GamesDataLoader,
-):
+def _prepare_batch(
+    batch: GamesBatch,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """
-    Run a single validation epoch.
+    Prepare a batch of data for training or evaluation.
 
     Parameters
     ----------
-    model : ChessGPT
-        The ChessGPT model to be validated.
-    dataloader : GamesDataLoader
-        DataLoader for the validation dataset.
+    batch : list[list[int]]
+        A batch of tokenized game sequences.
+    tokenizer : Tokenizer
+        The tokenizer used to process the sequences.
+
+    Returns
+    -------
+    tokens : torch.Tensor
+        Tensor of input tokens.
+    attn_masks : torch.Tensor
+        Tensor of attention masks.
+    targets : torch.Tensor
+        Tensor of target tokens.
     """
-    model.eval()
-    total_loss = 0.0
-    total_tokens = 0
-    with torch.no_grad():
-        for games_batch in tqdm(dataloader):
-            tokens, attn_masks = games_batch
-            attn_masks = torch.tril(
-                attn_masks.view(-1, 1, attn_masks.size(-1)).repeat(
-                    1, attn_masks.size(-1), 1
-                )
-            ).bool()
-            targets = tokens[:, 1:]
-            inputs = tokens[:, :-1]
-            logits, _ = model(inputs, attention_mask=attn_masks[:, :-1])
-            B, L, V = logits.shape
-            loss = F.cross_entropy(
-                logits.view(B * L, V),
-                targets.reshape(B * L),
-            )
-            total_loss += loss.item()
-            total_tokens += B * L
-    logging.info(f"Validation loss: {total_loss / total_tokens}")
+    attn_masks = batch.attention_masks
+    tokens = batch.tokens
+    attn_masks = torch.tril(
+        attn_masks.view(-1, 1, attn_masks.size(-1)).repeat(1, attn_masks.size(-1), 1)
+    ).bool()
+    targets = tokens[:, 1:]
+    inputs = tokens[:, :-1]
+    return inputs, attn_masks, targets
 
 
 if __name__ == "__main__":
@@ -162,4 +167,4 @@ if __name__ == "__main__":
         batch_size=16,
         shuffle=False,
     )
-    run_val_epoch(model, test_dataloader)
+    run_epoch(model, test_dataloader, train=False)

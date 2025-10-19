@@ -42,9 +42,11 @@ class Tokenizer:
                 vocab[token] = idx
         vocab[UNK_TOKEN] = len(vocab)
         vocab[PAD_TOKEN] = len(vocab)
+        vocab[START_TOKEN] = len(vocab)
+        vocab[END_TOKEN] = len(vocab)
         return vocab
 
-    def tokenize(self, text: str) -> list[int]:
+    def tokenize(self, text: str) -> list[str]:
         tokens = text.split()
         return (
             [START_TOKEN]
@@ -59,3 +61,6 @@ class Tokenizer:
     def decode(self, token_ids: list[int]) -> str:
         tokens = [self._inv_vocab.get(token_id, UNK_TOKEN) for token_id in token_ids]
         return " ".join(tokens)
+
+    def decode_batch(self, batch_token_ids: list[list[int]]) -> list[str]:
+        return [self.decode(token_ids) for token_ids in batch_token_ids]
