@@ -125,6 +125,8 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     train_dataset = GamesDataset(DATA_DIR / "games.train.txt")
     val_dataset = GamesDataset(DATA_DIR / "games.val.txt")
+    test_dataset = GamesDataset(DATA_DIR / "games.test.txt")
+
     tokenizer = Tokenizer()
     tokenizer.fit(train_dataset)
     train_dataloader = GamesDataLoader(
@@ -154,3 +156,10 @@ if __name__ == "__main__":
         num_epochs=10,
         lr=1e-4,
     )
+    test_dataloader = GamesDataLoader(
+        dataset=test_dataset,
+        tokenizer=tokenizer,
+        batch_size=16,
+        shuffle=False,
+    )
+    run_val_epoch(model, test_dataloader)
