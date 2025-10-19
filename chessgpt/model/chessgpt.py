@@ -51,3 +51,19 @@ class ChessGPT(nn.Module):
             x, _ = transformer(x)
         logits = self.proj(x)
         return logits, x
+
+
+def print_model_summary(model: torch.nn.Module):
+    print(model)
+    total = 0
+    trainable = 0
+    print("\nParameter summary:")
+    for name, param in model.named_parameters():
+        count = param.numel()
+        total += count
+        if param.requires_grad:
+            trainable += count
+        print(f"{name:40s} shape={tuple(param.shape)} params={count}")
+    print(f"\nTotal params: {total:,}")
+    print(f"Trainable params: {trainable:,}")
+    print(f"Non-trainable params: {total - trainable:,}")

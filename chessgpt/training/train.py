@@ -7,7 +7,7 @@ from chessgpt.constants import DATA_DIR
 from chessgpt.dataloaders import GamesDataLoader, GamesBatch
 from chessgpt.datasets import GamesDataset
 from chessgpt.eval import count_legal_moves
-from chessgpt.model import ChessGPT
+from chessgpt.model import ChessGPT, print_model_summary
 from chessgpt.tokenizers import Tokenizer
 
 
@@ -160,6 +160,7 @@ if __name__ == "__main__":
         num_heads=8,
         hidden_dim=512,
     )
+    print_model_summary(model)
     train(
         model=model,
         train_dataloader=train_dataloader,
