@@ -1,6 +1,6 @@
 import logging
-from nanolm.datasets import TextDataset
-from .constants import PAD_TOKEN, UNK_TOKEN
+from chessgpt.datasets import GamesDataset
+from .constants import PAD_TOKEN, UNK_TOKEN, START_TOKEN
 
 
 class Tokenizer:
@@ -10,7 +10,7 @@ class Tokenizer:
         self.vocab = {}
         self._inv_vocab = {}
 
-    def fit(self, dst: TextDataset):
+    def fit(self, dst: GamesDataset):
         unique_tokens = set()
         for sen in dst:
             tokens = sen.strip().split()
@@ -21,6 +21,7 @@ class Tokenizer:
         }
         self.vocab[UNK_TOKEN] = len(self.vocab)
         self.vocab[PAD_TOKEN] = len(self.vocab)
+        self.vocab[START_TOKEN] = len(self.vocab)
         self._inv_vocab = {idx: token for token, idx in self.vocab.items()}
         logging.info(f"Vocabulary size: {len(self.vocab)}")
 

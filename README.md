@@ -1,3 +1,3 @@
-# Nano LM
+# ChessGPT
     
-This project aims at providing a simple and efficient implementation of a small language model using only PyTorch building blocks and minimal dependencies. 
+This project aims at providing a simple and efficient implementation of a small generative language model learning to play chess, leveraging basic building blocks from PyTorch. 

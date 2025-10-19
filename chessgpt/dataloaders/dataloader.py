@@ -1,12 +1,12 @@
 from typing import Callable
-from nanolm.tokenizers import Tokenizer
-from nanolm.datasets import TextDataset
+from chessgpt.tokenizers import Tokenizer
+from chessgpt.datasets import GamesDataset
 
 
 class DataLoader:
     def __init__(
         self,
-        dataset: TextDataset,
+        dataset: GamesDataset,
         tokenizer: Tokenizer,
         batch_size: int,
         collate_fn: Callable[[list[list[int]]], tuple],

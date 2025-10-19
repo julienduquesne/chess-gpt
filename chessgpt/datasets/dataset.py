@@ -1,9 +1,9 @@
 from pathlib import Path
 
 
-class TextDataset:
+class GamesDataset:
     """
-    A simple text dataset class that loads data from a given file path.
+    A simple dataset class to store games in pgn format that loads data from a given file path.
     """
 
     def __init__(self, path: Path):

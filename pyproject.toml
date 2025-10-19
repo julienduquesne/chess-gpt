@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "nano-lm"
+name = "chess-gpt"
 version = "0.1.0"
-description = "Implementation of a nano LLM from scratch, using basic PyTorch building blocks."
+description = "Implementation of a chess GPT from scratch, using basic PyTorch building blocks."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["nanolm*"]
+include = ["chessgpt*"]
 
 [dependency-groups]
 dev = [
