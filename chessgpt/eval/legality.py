@@ -3,7 +3,7 @@ import chess
 from chessgpt.tokenizers import END_TOKEN, PAD_TOKEN, START_TOKEN, UNK_TOKEN
 
 
-def count_legal_moves(true_moves: list[str], pred_moves: list[str]) -> int:
+def count_legal_moves(true_moves: list[str], pred_moves: list[str]) -> tuple[int, int]:
     """
     Count the frequency of legal moves in the true and predicted moves.
 
@@ -18,8 +18,11 @@ def count_legal_moves(true_moves: list[str], pred_moves: list[str]) -> int:
     -------
     legal_moves_count : int
         Number of legal moves in the predicted moves.
+    illegal_moves_count : int
+        Number of illegal moves in the predicted moves.
     """
     legal_moves_count = 0
+    illegal_moves_count = 0
     for game_moves, game_next_move in zip(true_moves, pred_moves):
         board = chess.Board()
         moves = game_moves.strip().split()
@@ -38,5 +41,6 @@ def count_legal_moves(true_moves: list[str], pred_moves: list[str]) -> int:
                 chess.InvalidMoveError,
                 chess.AmbiguousMoveError,
             ):
+                illegal_moves_count += 1
                 continue
-    return legal_moves_count
+    return legal_moves_count, illegal_moves_count

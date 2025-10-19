@@ -69,12 +69,12 @@ def run_epoch(
     total_loss = 0.0
     total_tokens = 0
     pbar = tqdm(dataloader, desc="train" if train else "val", leave=False)
-    legal_moves = 0
+    legal_moves, illegal_moves_count = 0, 0
     for games_batch in pbar:
         inputs, attn_masks, targets = _prepare_batch(games_batch)
         if train:
             optimizer.zero_grad()  # type: ignore
-        logits, _ = model(inputs, attention_mask=attn_masks[:, :-1, :-1])
+        logits, _ = model(inputs, attention_mask=attn_masks)
         pred_tokens = logits.argmax(dim=-1)
         B, L, V = logits.shape
         pad_id = tokenizer.pad_token_id
@@ -93,10 +93,12 @@ def run_epoch(
         pbar.set_postfix(loss=f"{(loss.item() / batch_tokens):.4f}")
         moves = tokenizer.decode_batch(inputs.tolist())
         pred_moves = tokenizer.decode_batch(pred_tokens.tolist())
-        legal_moves += count_legal_moves(moves, pred_moves)
-    logging.info(f"Train loss: {total_loss / total_tokens}")
+        legal_moves, illegal_moves = count_legal_moves(moves, pred_moves)
+        legal_moves += legal_moves
+        illegal_moves_count += illegal_moves
+    logging.info(f"{'Train' if train else 'Val'} loss: {total_loss / total_tokens}")
     logging.info(
-        f"Percentage of legal moves: {(legal_moves / total_tokens) * 100:.4f}%"
+        f"Percentage of legal moves: {(legal_moves / (legal_moves + illegal_moves_count)) * 100:.4f}%"
     )
 
 
@@ -126,7 +128,7 @@ def _prepare_batch(
     tokens = batch.tokens
     attn_masks = torch.tril(
         attn_masks.view(-1, 1, attn_masks.size(-1)).repeat(1, attn_masks.size(-1), 1)
-    ).bool()
+    ).bool()[:, :-1, :-1]
     targets = tokens[:, 1:]
     inputs = tokens[:, :-1]
     return inputs, attn_masks, targets
