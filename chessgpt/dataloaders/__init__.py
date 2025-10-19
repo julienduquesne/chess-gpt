@@ -1,3 +1,3 @@
-from .dataloader import DataLoader
+from .dataloader import GamesDataLoader
 
-__all__ = ["DataLoader"]
+__all__ = ["GamesDataLoader"]

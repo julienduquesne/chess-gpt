@@ -10,6 +10,7 @@ class MultiHeadAttention(nn.Module):
     """
 
     def __init__(self, embed_size: int, num_heads: int):
+        super().__init__()
         self._embed_size = embed_size
         self._num_heads = num_heads
         self._head_dim = embed_size // num_heads
@@ -75,6 +76,7 @@ class TransformerBlock(nn.Module):
     """
 
     def __init__(self, embed_size: int, num_heads: int, hidden_dim: int):
+        super().__init__()
         self.attention = MultiHeadAttention(embed_size, num_heads)
         self.feed_forward = nn.Sequential(
             nn.Linear(embed_size, hidden_dim),

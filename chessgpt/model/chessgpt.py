@@ -15,6 +15,7 @@ class ChessGPT(nn.Module):
         num_heads: int,
         hidden_dim: int,
     ):
+        super().__init__()
         self.embeddings = nn.Embedding(
             num_embeddings=vocab_size, embedding_dim=embed_size
         )
@@ -25,8 +26,11 @@ class ChessGPT(nn.Module):
                 for _ in range(num_layers)
             ]
         )
+        self.proj = nn.Linear(embed_size, vocab_size)
 
-    def forward(self, tokens: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, tokens: torch.Tensor, attention_mask: torch.Tensor
+    ) -> torch.Tensor:
         """
         Forward pass of the ChessGPT model.
 
@@ -34,6 +38,8 @@ class ChessGPT(nn.Module):
         ----------
         tokens : torch.Tensor
             Input tensor of shape (batch_size, seq_len) containing token indices.
+        attention_mask : torch.Tensor
+            Attention mask tensor of shape (seq_len, seq_len).
 
         Returns
         -------
@@ -43,4 +49,5 @@ class ChessGPT(nn.Module):
         x = self.embeddings(tokens) + self.pos_embeddings[: tokens.size(1), :]
         for transformer in self.transformer_blocks:
             x, _ = transformer(x)
-        return x
+        logits = self.proj(x)
+        return logits, x
