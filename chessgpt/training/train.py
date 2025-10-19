@@ -77,9 +77,7 @@ def run_epoch(
         logits, _ = model(inputs, attention_mask=attn_masks[:, :-1])
         pred_tokens = logits.argmax(dim=-1)
         B, L, V = logits.shape
-        pad_id = (
-            tokenizer.pad_token_id
-        )  # adapt if your tokenizer uses a different attribute
+        pad_id = tokenizer.pad_token_id
         loss = F.cross_entropy(
             logits.view(B * L, V),
             targets.reshape(B * L),

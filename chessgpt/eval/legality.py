@@ -1,6 +1,6 @@
 import chess
 
-from chessgpt.tokenizers.constants import END_TOKEN, PAD_TOKEN, START_TOKEN, UNK_TOKEN
+from chessgpt.tokenizers import END_TOKEN, PAD_TOKEN, START_TOKEN, UNK_TOKEN
 
 
 def count_legal_moves(true_moves: list[str], pred_moves: list[str]) -> int:
