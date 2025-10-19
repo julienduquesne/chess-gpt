@@ -30,7 +30,7 @@ class ChessGPT(nn.Module):
 
     def forward(
         self, tokens: torch.Tensor, attention_mask: torch.Tensor
-    ) -> torch.Tensor:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Forward pass of the ChessGPT model.
 
@@ -43,12 +43,14 @@ class ChessGPT(nn.Module):
 
         Returns
         -------
-        torch.Tensor
-            Output tensor of shape (batch_size, seq_len, embed_size).
+        logits : torch.Tensor
+            Output logits of shape (batch_size, seq_len, vocab_size).
+        hidden_states : torch.Tensor
+            Hidden states of shape (batch_size, seq_len, embed_size).
         """
         x = self.embeddings(tokens) + self.pos_embeddings[: tokens.size(1), :]
         for transformer in self.transformer_blocks:
-            x, _ = transformer(x)
+            x, _ = transformer(x, attention_mask)
         logits = self.proj(x)
         return logits, x
 
@@ -63,7 +65,6 @@ def print_model_summary(model: torch.nn.Module):
         total += count
         if param.requires_grad:
             trainable += count
-        print(f"{name:40s} shape={tuple(param.shape)} params={count}")
     print(f"\nTotal params: {total:,}")
     print(f"Trainable params: {trainable:,}")
     print(f"Non-trainable params: {total - trainable:,}")

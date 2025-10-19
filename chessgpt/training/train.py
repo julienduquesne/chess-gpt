@@ -74,7 +74,7 @@ def run_epoch(
         inputs, attn_masks, targets = _prepare_batch(games_batch)
         if train:
             optimizer.zero_grad()  # type: ignore
-        logits, _ = model(inputs, attention_mask=attn_masks[:, :-1])
+        logits, _ = model(inputs, attention_mask=attn_masks[:, :-1, :-1])
         pred_tokens = logits.argmax(dim=-1)
         B, L, V = logits.shape
         pad_id = tokenizer.pad_token_id
