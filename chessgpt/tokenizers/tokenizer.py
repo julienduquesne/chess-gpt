@@ -1,6 +1,6 @@
 import logging
 from chessgpt.datasets import GamesDataset
-from .constants import PAD_TOKEN, UNK_TOKEN, START_TOKEN
+from .constants import PAD_TOKEN, UNK_TOKEN, START_TOKEN, END_TOKEN
 
 
 class Tokenizer:
@@ -22,6 +22,7 @@ class Tokenizer:
         self.vocab[UNK_TOKEN] = len(self.vocab)
         self.vocab[PAD_TOKEN] = len(self.vocab)
         self.vocab[START_TOKEN] = len(self.vocab)
+        self.vocab[END_TOKEN] = len(self.vocab)
         self._inv_vocab = {idx: token for token, idx in self.vocab.items()}
         logging.info(f"Vocabulary size: {len(self.vocab)}")
 
@@ -45,7 +46,11 @@ class Tokenizer:
 
     def tokenize(self, text: str) -> list[int]:
         tokens = text.split()
-        return [token if token in self.vocab else UNK_TOKEN for token in tokens]
+        return (
+            [START_TOKEN]
+            + [token if token in self.vocab else UNK_TOKEN for token in tokens]
+            + [END_TOKEN]
+        )
 
     def encode(self, text: str) -> list[int]:
         tokens = self.tokenize(text)

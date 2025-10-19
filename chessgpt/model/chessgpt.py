@@ -1,0 +1,46 @@
+import torch
+import torch.nn as nn
+
+from .transformer import TransformerBlock
+from .positional_encoding import positional_encoding
+
+
+class ChessGPT(nn.Module):
+    def __init__(
+        self,
+        vocab_size: int,
+        max_seq_len: int,
+        embed_size: int,
+        num_layers: int,
+        num_heads: int,
+        hidden_dim: int,
+    ):
+        self.embeddings = nn.Embedding(
+            num_embeddings=vocab_size, embedding_dim=embed_size
+        )
+        self.pos_embeddings = positional_encoding(max_seq_len, embed_size)
+        self.transformer_blocks = nn.ModuleList(
+            [
+                TransformerBlock(embed_size, num_heads, hidden_dim)
+                for _ in range(num_layers)
+            ]
+        )
+
+    def forward(self, tokens: torch.Tensor) -> torch.Tensor:
+        """
+        Forward pass of the ChessGPT model.
+
+        Parameters
+        ----------
+        tokens : torch.Tensor
+            Input tensor of shape (batch_size, seq_len) containing token indices.
+
+        Returns
+        -------
+        torch.Tensor
+            Output tensor of shape (batch_size, seq_len, embed_size).
+        """
+        x = self.embeddings(tokens) + self.pos_embeddings[: tokens.size(1), :]
+        for transformer in self.transformer_blocks:
+            x, _ = transformer(x)
+        return x
